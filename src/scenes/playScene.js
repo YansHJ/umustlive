@@ -134,10 +134,8 @@ export default class playScene extends Phaser.Scene
         background1.setTilePosition(0,0)
         background2.setTilePosition(0,0)
         //创建临时提示
-        this.add.text(300,300,'目前是开发阶段的Demo      操作说明：W A S D 控制方向，J键攻击',{fontSize: '48px'})
-        // 设置相机的滚动因子
-        mainCameras = this.cameras.main.setScroll(-0.3, 0);
-        //相机缩放
+        this.add.text(300,300,'目前是开发阶段的Demo    操作说明：W A S D 控制方向，J键攻击',{fontSize: '48px'})
+        this.add.text(300,500,'下阶段计划：完善游戏性(机制,攻击,人物和怪物模型等)',{fontSize: '48px'})
         mainCameras.zoom = 1
         //相机边界（左上下固定，右边无限）
         mainCameras.setBounds(0,0,Infinity,1080)
@@ -149,8 +147,9 @@ export default class playScene extends Phaser.Scene
         sceneryObj = this.physics.add.staticGroup();
         this.createGrassRoads();
         //创建玩家
-        player = this.physics.add.sprite(100,900,'player').setSize(130,110);
+        player = this.physics.add.sprite(100,800,'player').setSize(100,130);
         player.setBounce(0.1)
+        this.createPlayerAnim();
         // player.setCollideWorldBounds(true)
         //创建人物移动键盘监听
         cursors = this.input.keyboard;
@@ -171,6 +170,11 @@ export default class playScene extends Phaser.Scene
         this.physics.add.collider(zombies,roadGroup)
         //碰撞检测（丧尸，子弹）
         this.physics.add.collider(zombies,bullets)
+        //接触检测
+        this.physics.add.collider(zombies,player)
+        this.physics.add.overlap(player,zombies,() =>{
+            player.anims.play('playerUnderAttack',true)
+        },null,this)
         //定时创建丧尸
         this.time.addEvent({
             delay: 5000,
@@ -184,30 +188,36 @@ export default class playScene extends Phaser.Scene
         if (cursors.addKey('A').isDown)
         {
             player.setVelocityX(-playerBaseSpeed);
+            player.anims.play('playerA',true)
             playerLastDirection = -1
         }
         else if (cursors.addKey('D').isDown)
         {
             player.setVelocityX(playerBaseSpeed);
+            player.anims.play('playerD',true)
             playerLastDirection = 1
 
         }
         else
         {
             player.setVelocityX(0);
+            player.anims.play('playerStand',true)
         }
 
         if (cursors.addKey('W').isDown && player.body.touching.down)
         {
             player.setVelocityY(-playerBaseSpeed - 50);
+            player.anims.play('playerStand',false)
         }
 
         if (cursors.addKey('S').isDown && !player.body.touching.down)
         {
             player.setVelocityY(+playerBaseSpeed + 200);
+            player.anims.play('playerStand',false)
         }
         //子弹创建
         if (attackOne.isDown) {
+            player.anims.play('playerJ',true)
             //子弹速度
             var bulletSpeed = 3200;
             //玩家单位向量
@@ -464,6 +474,38 @@ export default class playScene extends Phaser.Scene
         console.log('终点：' + RoadLastXBase * RoadBaseSpacing)
     }
 
+    createPlayerAnim() {
+        this.anims.create({
+            key: 'playerD',
+            frames: this.anims.generateFrameNumbers('player',{start: 5, end: 8}),
+            frameRate: 12,
+            repeat: -1
+        })
+        this.anims.create({
+            key: 'playerA',
+            frames: this.anims.generateFrameNumbers('player',{start: 8, end: 5}),
+            frameRate: 6,
+            repeat: -1
+        })
+        this.anims.create({
+            key: 'playerJ',
+            frames: this.anims.generateFrameNumbers('player',{start: 9, end: 11}),
+            frameRate: 3,
+            repeat: -1
+        })
+        this.anims.create({
+            key: 'playerStand',
+            frames: this.anims.generateFrameNumbers('player',{start: 0, end: 3}),
+            frameRate: 6,
+            repeat: -1
+        })
+        this.anims.create({
+            key: 'playerUnderAttack',
+            frames: this.anims.generateFrameNumbers('player',{start: 4, end: 4}),
+            frameRate: 12,
+            repeat: -1
+        })
+    }
 
     /**d
      * 检测死亡

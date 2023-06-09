@@ -31,14 +31,14 @@ class MyGame extends Phaser.Scene
         this.load.image('zombie',zombie);
         //加载精灵
         this.load.spritesheet('logo',logo,{frameWidth: 896 , frameHeight: 896})
-        this.load.spritesheet('player',player,{frameWidth: 224 , frameHeight: 224})
+        this.load.spritesheet('player',player,{frameWidth: 300 , frameHeight: 200})
         //加载场景
         this.scene.add('playScene',playScene,false);
     }
       
     create ()
     {
-        this.scene.start('playScene')
+        // this.scene.start('playScene')
         var logo = this.physics.add.sprite(960,380,'logo');
         this.anims.create({
             key:'startLogo1',
