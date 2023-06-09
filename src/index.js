@@ -3,6 +3,7 @@ import logo from './assets/YansGames.png'
 import roadSix from './assets/mapOne/background/Layers/6.png'
 import roadEight from './assets/mapOne/background/Layers/8.png'
 import player from './assets/player.png'
+import bullets from './assets/bullets.png'
 import sky from './assets/mapOne/background/Background.png'
 import grassPlatformLeft from './assets/mapOne/tiles/Ground_grass_0020_tile.png'
 import grassPlatformMiddle from './assets/mapOne/tiles/Ground_grass_0024_tile.png'
@@ -29,6 +30,7 @@ class MyGame extends Phaser.Scene
         this.load.image('grassPlatformRight',grassPlatformRight);
         this.load.image('houseOne',houseOne);
         this.load.image('zombie',zombie);
+        this.load.image('bullets',bullets);
         //加载精灵
         this.load.spritesheet('logo',logo,{frameWidth: 896 , frameHeight: 896})
         this.load.spritesheet('player',player,{frameWidth: 300 , frameHeight: 200})

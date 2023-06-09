@@ -134,8 +134,8 @@ export default class playScene extends Phaser.Scene
         background1.setTilePosition(0,0)
         background2.setTilePosition(0,0)
         //创建临时提示
-        this.add.text(300,300,'目前是开发阶段的Demo    操作说明：W A S D 控制方向，J键攻击',{fontSize: '48px'})
-        this.add.text(300,500,'下阶段计划：完善游戏性(机制,攻击,人物和怪物模型等)',{fontSize: '48px'})
+        this.add.text(300,200,'目前是开发阶段的Demo    操作说明：W A S D 控制方向，J键攻击',{fontSize: '48px'})
+        this.add.text(300,300,'下阶段计划：完善游戏性(机制,攻击,人物和怪物模型等)',{fontSize: '48px'})
         // 设置相机的滚动因子
         mainCameras = this.cameras.main.setScroll(-0.3, 0);
         //相机缩放
@@ -225,7 +225,7 @@ export default class playScene extends Phaser.Scene
             var bulletSpeed = 3200;
             //玩家单位向量
             var unitVector = player.body.velocity.clone().normalize();
-            var bullet = bullets.create(player.x,player.y,'player').setScale(0.2,0.2);
+            var bullet = bullets.create(player.x,player.y,'bullets').setScale(0.2,0.2);
             if (unitVector.x === 0){
                 bullet.setVelocity(playerLastDirection * bulletSpeed,0);
             } else {
