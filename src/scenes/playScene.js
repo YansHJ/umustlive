@@ -136,6 +136,9 @@ export default class playScene extends Phaser.Scene
         //创建临时提示
         this.add.text(300,300,'目前是开发阶段的Demo    操作说明：W A S D 控制方向，J键攻击',{fontSize: '48px'})
         this.add.text(300,500,'下阶段计划：完善游戏性(机制,攻击,人物和怪物模型等)',{fontSize: '48px'})
+        // 设置相机的滚动因子
+        mainCameras = this.cameras.main.setScroll(-0.3, 0);
+        //相机缩放
         mainCameras.zoom = 1
         //相机边界（左上下固定，右边无限）
         mainCameras.setBounds(0,0,Infinity,1080)
