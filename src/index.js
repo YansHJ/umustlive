@@ -9,9 +9,11 @@ import grassPlatformLeft from './assets/mapOne/tiles/Ground_grass_0020_tile.png'
 import grassPlatformMiddle from './assets/mapOne/tiles/Ground_grass_0024_tile.png'
 import grassPlatformRight from './assets/mapOne/tiles/Ground_grass_0016_tile.png'
 import houseOne from './assets/mapOne/objects/house/1.png'
-import zombie from './assets/zombie.png'
+import redHealth from './assets/states/health/redHealth.jpg'
+import greenHealth from './assets/states/health/greenHealth.jpg'
 import playScene from './scenes/playScene'
 
+var playerHealthMax;
 class MyGame extends Phaser.Scene
 {
     constructor ()
@@ -29,11 +31,13 @@ class MyGame extends Phaser.Scene
         this.load.image('grassPlatformMiddle',grassPlatformMiddle);
         this.load.image('grassPlatformRight',grassPlatformRight);
         this.load.image('houseOne',houseOne);
-        this.load.image('zombie',zombie);
         this.load.image('bullets',bullets);
         //加载精灵
         this.load.spritesheet('logo',logo,{frameWidth: 896 , frameHeight: 896})
         this.load.spritesheet('player',player,{frameWidth: 300 , frameHeight: 200})
+        //加载血量图
+        this.load.image('redHealth',redHealth);
+        this.load.image('greenHealth',greenHealth);
         //加载场景
         this.scene.add('playScene',playScene,false);
     }
@@ -60,8 +64,11 @@ class MyGame extends Phaser.Scene
             logo.y = 180;
             logo.play('startLogo2')
         })
-        this.time.delayedCall(7000,() => {
-            this.scene.start('playScene')
+        //玩家初始血量
+        playerHealthMax = 100
+        this.time.delayedCall(1000,() => {
+            console.log('血量' + playerHealthMax)
+            this.scene.start('playScene',{playerHealthMax: playerHealthMax})
         })
     }
 }
