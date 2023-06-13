@@ -19,7 +19,11 @@ import tree5 from '../assets/mapOne/objects/trees/5.png'
 import tree6 from '../assets/mapOne/objects/trees/6.png'
 import doorOpen from '../assets/mapOne/objects/doorOpen.png'
 import purpleArray from '../assets/mapOne/objects/purpleArray.png'
-import zombie from '../assets/mapOne/objects/skull.png'
+import purpleDiamond from '../assets/mapOne/objects/purpleDiamond.png'
+import zombie from '../assets/mapOne/objects/girl1.png'
+
+import knife1_1 from '../assets/weapons/knife1_1.png'
+import staff1_1 from '../assets/weapons/staff1_1.png'
 
 //路面组
 var roadGroup;
@@ -35,6 +39,8 @@ var playerBaseSpeed ;
 var attackOne;
 //攻击键②
 var attackTwo;
+//交互键
+var interactiveKey;
 //子弹组
 var bullets;
 //丧尸组
@@ -76,11 +82,19 @@ var playerHealthNow;
 var playerHealthNowTextObj;
 //玩家信息显示实体容器
 var playerInfoContainer;
+//玩家自身容器
+var playerContainer;
 //受伤标志
 var hurtFlag;
 //开门动画
 var purpleArrayGroup;
 var purpleArrayGroupIndex;
+//提示文字
+var textTips ;
+//开局紫色水晶
+var purpleDiamondObj;
+//武器组
+var weaponGroup;
 export default class playScene extends Phaser.Scene
 {
     /**
@@ -140,15 +154,21 @@ export default class playScene extends Phaser.Scene
         this.load.image('tree4',tree4);
         this.load.image('tree5',tree5);
         this.load.image('tree6',tree6);
+        //加载武器
+        this.load.image('knife1_1',knife1_1);
+        this.load.image('staff1_1',staff1_1);
         //加载序列
         this.load.spritesheet('doorOpen',doorOpen,{frameWidth: 96, frameHeight: 64})
         this.load.spritesheet('purpleArray',purpleArray,{frameWidth: 32, frameHeight: 32})
-        this.load.spritesheet('zombie',zombie,{frameWidth: 48 , frameHeight: 48})
+        this.load.spritesheet('zombie',zombie,{frameWidth: 45 , frameHeight: 60})
+        this.load.spritesheet('purpleDiamond',purpleDiamond,{frameWidth: 32 , frameHeight: 64})
 
     }
 
     create ()
     {
+        //全屏
+        // this.scale.startFullscreen()
         //初始化数据
         this.initValue();
         //获取屏幕尺寸
@@ -168,7 +188,7 @@ export default class playScene extends Phaser.Scene
         //创建临时提示
         this.add.text(300,100,'目前是开发阶段的Demo    操作说明：W A S D 控制方向，J键攻击',{fontSize: '48px'})
         this.add.text(300,200,'6月12日更新: 完善怪物寻路,增加怪物模型,以及部分动画,增加玩家血量和受伤机制',{fontSize: '48px'})
-        this.add.text(300,300,'下阶段计划：完善游戏机制,天赋，武器，攻击等',{fontSize: '48px'})
+        this.add.text(300,300,'下阶段计划：',{fontSize: '48px'})
         // 设置相机的滚动因子
         mainCameras = this.cameras.main.setScroll(-0.3, 0);
         //相机缩放
@@ -177,6 +197,10 @@ export default class playScene extends Phaser.Scene
         mainCameras.setBounds(0,0,Infinity,1080)
         //设置此场景重力
         this.physics.world.gravity.y = gravity;
+        //创建怪物动画
+        this.createMonsterAnim()
+        //创建景物动画
+        this.createSceneryAnim();
         //创建路
         roadGroup = this.physics.add.staticGroup();
         //创建景物
@@ -184,7 +208,13 @@ export default class playScene extends Phaser.Scene
         this.createScenery();
         this.createGrassRoads();
         //创建玩家
-        player = this.physics.add.sprite(100,800,'player').setSize(100,130);
+        player = this.physics.add.sprite(100,800,'player')
+            .setSize(100,130)
+            .setDepth(1);
+        //初始化玩家数据
+        player.setData('haveWeapon',0)
+        player.setData('weapon1',0)
+        player.setData('weapon2',0)
         player.setBounce(0.1)
         //创建玩家动作动画
         this.createPlayerAnim();
@@ -208,34 +238,30 @@ export default class playScene extends Phaser.Scene
         cursors = this.input.keyboard;
         //创建人物攻击①键盘监听
         attackOne = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.J);
-        //相机X轴跟随玩家
-        mainCameras.startFollow(player,true,1,0)
+        attackTwo = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.K);
+        interactiveKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
+        //相机X轴跟随玩家容器
+        mainCameras.startFollow(player,true,0.05,0.05)
         mainCameras.setFollowOffset(0,0)
-        //碰撞检测（玩家，道路）
-        this.physics.add.collider(player,roadGroup)
         //创建子弹组
         bullets = this.physics.add.group()
-        //碰撞检测（子弹，道路）
-        this.physics.add.collider(bullets,roadGroup)
         //丧尸组
         zombies = this.physics.add.group()
-        //碰撞检测（丧尸，道路）
-        this.physics.add.collider(zombies,roadGroup)
-        //碰撞检测（丧尸，子弹）
-        this.physics.add.collider(zombies,bullets)
-        //接触检测
-        // this.physics.add.collider(zombies,player)
-        this.physics.add.overlap(player,zombies,this.monsterHurt,null,this)
+        //武器组
+        weaponGroup = this.add.group();
+        //创建公共碰撞检测
+        this.createCollider();
         //创建丧尸
         this.createZombie();
-        //创建怪物动画
-        this.createMonsterAnim()
-        //创建景物动画
-        this.createSceneryAnim();
     }
 
-
+    /**
+     * 更新
+     * @param time
+     * @param delta
+     */
     update(time, delta) {
+        //玩家移动及动画
         if (!hurtFlag) {
             if (cursors.addKey('A').isDown)
             {
@@ -270,33 +296,46 @@ export default class playScene extends Phaser.Scene
         }
         //怪物巡逻
         this.monsterPatrol(delta)
-        //子弹创建
+        //武器检测
+        if (player.getData('weapon1') === 0 && player.getData('weapon2') === 0 ) {
+            player.setData('haveWeapon',0);
+        } else {
+            player.setData('haveWeapon',1);
+        }
+        //攻击1
         if (attackOne.isDown) {
-            player.anims.play('playerJ',true)
-            //子弹速度
-            var bulletSpeed = 3200;
-            //玩家单位向量
-            var unitVector = player.body.velocity.clone().normalize();
-            var bullet = bullets.create(player.x,player.y,'bullets').setScale(0.2,0.2);
-            if (unitVector.x === 0){
-                bullet.setVelocity(playerLastDirection * bulletSpeed,0);
+            if (player.getData('haveWeapon') === 0) {
+                textTips.setText('你当前没有武器')
             } else {
-                bullet.setVelocity(unitVector.x * bulletSpeed,unitVector.y * bulletSpeed);
+                player.anims.play('playerJ',true)
+                //子弹速度
+                var bulletSpeed = 800;
+                //玩家单位向量
+                var unitVector = player.body.velocity.clone().normalize();
+                var bullet = bullets.create(player.x,player.y,'bullets').setScale(1,1).setSize(200,50);
+                // bullet.body.allowGravity = false;
+                if (unitVector.x === 0){
+                    bullet.setVelocity(playerLastDirection * bulletSpeed,0);
+                } else {
+                    bullet.setVelocity(unitVector.x * bulletSpeed,unitVector.y * bulletSpeed);
+                }
+                bullet.setBounce(0.5)
             }
-            bullet.setBounce(0.5)
             attackOne.reset()
         }
-
         // 根据相机的滚动位置调整背景图像的位置
         // 背景图像的滚动速度与相机滚动因子相关
         background1.tilePositionX = this.cameras.main.scrollX * 0.3;
         background2.tilePositionX = this.cameras.main.scrollX * 0.3;
         //根据玩家坐标生成背景图
         this.adjustmentBackground()
-
+        //实时更新武器组位置
+        weaponGroup.getChildren().forEach(weapon => {
+            weapon.x = player.x + weapon.getData('XWithPlayer');
+            weapon.y = player.y + weapon.getData('YWithPlayer');
+        })
         //玩家信息随相机更新移动
-        playerInfoContainer.x = this.cameras.main.scrollX;
-        playerInfoContainer.y = this.cameras.main.scrollY;
+        playerInfoContainer.setPosition(this.cameras.main.scrollX,this.cameras.main.scrollY)
         //检测死亡
         this.detectDeath();
     }
@@ -399,6 +438,8 @@ export default class playScene extends Phaser.Scene
                 lastRightCamerasCoordinate = background1.x
             }
         }
+        //提示文字实时跟随玩家
+        textTips.setPosition(player.x -160 ,player.y - 200)
     }
 
     /**
@@ -585,6 +626,9 @@ export default class playScene extends Phaser.Scene
         console.log('终点：' + RoadLastXBase * RoadBaseSpacing)
     }
 
+    /**
+     * 创建角色动画
+     */
     createPlayerAnim() {
         this.anims.create({
             key: 'playerD',
@@ -594,20 +638,20 @@ export default class playScene extends Phaser.Scene
         })
         this.anims.create({
             key: 'playerA',
-            frames: this.anims.generateFrameNumbers('player',{start: 8, end: 5}),
+            frames: this.anims.generateFrameNumbers('player',{start: 9, end: 12}),
             frameRate: 6,
             repeat: -1
         })
         this.anims.create({
             key: 'playerJ',
-            frames: this.anims.generateFrameNumbers('player',{start: 9, end: 11}),
+            frames: this.anims.generateFrameNumbers('player',{start: 13, end: 16}),
             frameRate: 3,
             repeat: -1
         })
         this.anims.create({
             key: 'playerStand',
             frames: this.anims.generateFrameNumbers('player',{start: 0, end: 3}),
-            frameRate: 6,
+            frameRate: 8,
             repeat: -1
         })
         this.anims.create({
@@ -634,6 +678,13 @@ export default class playScene extends Phaser.Scene
             key: 'purpleArrayAnim',
             frames: this.anims.generateFrameNumbers('purpleArray',{start: 0,end: 15}),
             frameRate: 12,
+            repeat: -1
+        })
+        //紫色水晶旋转动画
+        this.anims.create({
+            key: 'purpleDiamondAnim',
+            frames: this.anims.generateFrameNumbers('purpleDiamond',{start: 0 ,end: 7}),
+            frameRate: 6,
             repeat: -1
         })
     }
@@ -668,6 +719,26 @@ export default class playScene extends Phaser.Scene
         for (let i = 0; i < 10; i++) {
             purpleArrayGroup.create(-1000,-1000,'doorOpen').setScale(4);
         }
+        //创建文字提示
+        textTips = this.add.text(-1000,-1000,'' ,{fontSize: '48px'});
+        textTips.setColor('#ff2929')
+        //创建计时器移除文字提示
+        this.time.addEvent({
+            delay: 4000,
+            callback: () => {
+                textTips.setText('')
+            },
+            loop:true
+        })
+        //创建开局获取武器的紫色水晶
+        purpleDiamondObj = this.physics.add.staticSprite(800,860, 'purpleDiamond')
+            .setScale(5)
+            .setSize(120,240)
+            .setOffset(-40,-100);
+        purpleDiamondObj.anims.play('purpleDiamondAnim',true)
+        //创建文字提示
+        var purpleDiamondObjText = this.add.text(660,700,'靠近使用E键获取武器' ,{fontSize: '32px'});
+        purpleDiamondObjText.setColor('#9b4aff')
     }
 
     /**
@@ -698,6 +769,68 @@ export default class playScene extends Phaser.Scene
         this.time.delayedCall(500,() => {
             hurtFlag = false;
         })
+    }
+
+    /**
+     * 公共碰撞检测创建
+     */
+    createCollider() {
+        //碰撞检测（玩家，道路）
+        this.physics.add.collider(player,roadGroup)
+        //碰撞检测（子弹，道路）
+        // this.physics.add.collider(bullets,roadGroup)
+        //碰撞检测（丧尸，道路）
+        this.physics.add.collider(zombies,roadGroup)
+        //碰撞检测（丧尸，子弹）
+        // this.physics.add.collider(zombies,bullets)
+        //接触检测（玩家，紫色水晶）
+        this.physics.add.overlap(player,purpleDiamondObj, this.getWeaponFromStart,null,this)
+        //接触检测（玩家，丧尸）
+        this.physics.add.overlap(player,zombies,this.monsterHurt,null,this)
+        //接触检测（子弹，丧尸）
+        this.physics.add.overlap(bullets,zombies,this.monsterDeath,null,this)
+        //接触检测（子弹，道路）
+        this.physics.add.overlap(bullets,roadGroup,this.bulletDeath,null,this)
+    }
+
+    /**
+     * 接触水晶，获得武器
+     */
+    getWeaponFromStart() {
+        //交互
+        if (interactiveKey.isDown) {
+            if (player.getData('weapon1') === 1) {
+                textTips.setText('不可以重复获得')
+                interactiveKey.reset()
+            } else {
+                player.setData('weapon1',1)
+                textTips.setText('获得武器')
+                weaponGroup.create(0,0,'staff1_1')
+                    .setScale(0.5)
+                    .setRotation(-45)
+                    .setData('XWithPlayer',36)
+                    .setData('YWithPlayer',15);
+                interactiveKey.reset()
+            }
+        }
+    }
+
+    /**
+     * 怪物死亡
+     */
+    monsterDeath(bullet,zombie) {
+        bullet.disableBody(true,true);
+        zombie.disableBody(true,true)
+        bullets.remove(bullet)
+        zombies.remove(zombie)
+    }
+
+    /**
+     * 子弹消失
+     */
+    bulletDeath(bullet,road) {
+        bullet.disableBody(true,true);
+        bullets.remove(bullet)
     }
 
     /**d

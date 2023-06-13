@@ -3,7 +3,7 @@ import logo from './assets/YansGames.png'
 import roadSix from './assets/mapOne/background/Layers/6.png'
 import roadEight from './assets/mapOne/background/Layers/8.png'
 import player from './assets/player.png'
-import bullets from './assets/bullets.png'
+import bullets from './assets/laserSprites/26.png'
 import sky from './assets/mapOne/background/Background.png'
 import grassPlatformLeft from './assets/mapOne/tiles/Ground_grass_0020_tile.png'
 import grassPlatformMiddle from './assets/mapOne/tiles/Ground_grass_0024_tile.png'
@@ -82,11 +82,18 @@ const config = {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH,
     },
+    plugins: {
+        scene: [{
+            key: 'SpinePlugin',
+            plugin: window.SpinePlugin,
+            sceneKey: 'spine'
+        }]
+    },
     physics: {
         default: 'arcade',
         arcade: {
             gravity: { y: 30 },
-            debug: false
+            debug: true
         }
     },
     scene: MyGame
