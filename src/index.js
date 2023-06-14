@@ -1,14 +1,7 @@
 import Phaser from 'phaser';
 import logo from './assets/YansGames.png'
-import roadSix from './assets/mapOne/background/Layers/6.png'
-import roadEight from './assets/mapOne/background/Layers/8.png'
 import player from './assets/player.png'
 import bullets from './assets/laserSprites/26.png'
-import sky from './assets/mapOne/background/Background.png'
-import grassPlatformLeft from './assets/mapOne/tiles/Ground_grass_0020_tile.png'
-import grassPlatformMiddle from './assets/mapOne/tiles/Ground_grass_0024_tile.png'
-import grassPlatformRight from './assets/mapOne/tiles/Ground_grass_0016_tile.png'
-import houseOne from './assets/mapOne/objects/house/1.png'
 import redHealth from './assets/states/health/redHealth.jpg'
 import greenHealth from './assets/states/health/greenHealth.jpg'
 import playScene from './scenes/playScene'
@@ -24,13 +17,6 @@ class MyGame extends Phaser.Scene
     preload ()
     {
         //加载图
-        this.load.image('roadSix',roadSix);
-        this.load.image('roadEight',roadEight);
-        this.load.image('sky',sky);
-        this.load.image('grassPlatformLeft',grassPlatformLeft);
-        this.load.image('grassPlatformMiddle',grassPlatformMiddle);
-        this.load.image('grassPlatformRight',grassPlatformRight);
-        this.load.image('houseOne',houseOne);
         this.load.image('bullets',bullets);
         //加载精灵
         this.load.spritesheet('logo',logo,{frameWidth: 896 , frameHeight: 896})

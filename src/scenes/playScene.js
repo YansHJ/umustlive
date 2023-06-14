@@ -1,22 +1,22 @@
 import Phaser from 'phaser';
-import stone1 from '../assets/mapOne/objects/stones/1.png'
-import stone2 from '../assets/mapOne/objects/stones/2.png'
-import stone3 from '../assets/mapOne/objects/stones/3.png'
-import stone4 from '../assets/mapOne/objects/stones/4.png'
-import stone5 from '../assets/mapOne/objects/stones/5.png'
-import stone6 from '../assets/mapOne/objects/stones/6.png'
-import bushes1 from '../assets/mapOne/objects/bushes/1.png'
-import bushes2 from '../assets/mapOne/objects/bushes/2.png'
-import bushes3 from '../assets/mapOne/objects/bushes/3.png'
-import bushes4 from '../assets/mapOne/objects/bushes/4.png'
-import bushes5 from '../assets/mapOne/objects/bushes/5.png'
-import bushes6 from '../assets/mapOne/objects/bushes/6.png'
-import tree1 from '../assets/mapOne/objects/trees/1.png'
-import tree2 from '../assets/mapOne/objects/trees/2.png'
-import tree3 from '../assets/mapOne/objects/trees/3.png'
-import tree4 from '../assets/mapOne/objects/trees/4.png'
-import tree5 from '../assets/mapOne/objects/trees/5.png'
-import tree6 from '../assets/mapOne/objects/trees/6.png'
+import stone1 from '../assets/mapOne/objects/stones/1_gray.png'
+import stone2 from '../assets/mapOne/objects/stones/2_gray.png'
+import stone3 from '../assets/mapOne/objects/stones/3_gray.png'
+import stone4 from '../assets/mapOne/objects/stones/4_gray.png'
+import stone5 from '../assets/mapOne/objects/stones/5_gray.png'
+import stone6 from '../assets/mapOne/objects/stones/6_gray.png'
+import bushes1 from '../assets/mapOne/objects/bushes/1_gray.png'
+import bushes2 from '../assets/mapOne/objects/bushes/2_gray.png'
+import bushes3 from '../assets/mapOne/objects/bushes/3_gray.png'
+import bushes4 from '../assets/mapOne/objects/bushes/4_gray.png'
+import bushes5 from '../assets/mapOne/objects/bushes/5_gray.png'
+import bushes6 from '../assets/mapOne/objects/bushes/6_gray.png'
+import tree1 from '../assets/mapOne/objects/trees/1_gray.png'
+import tree2 from '../assets/mapOne/objects/trees/2_gray.png'
+import tree3 from '../assets/mapOne/objects/trees/3_gray.png'
+import tree4 from '../assets/mapOne/objects/trees/4_gray.png'
+import tree5 from '../assets/mapOne/objects/trees/5_gray.png'
+import tree6 from '../assets/mapOne/objects/trees/6_gray.png'
 import doorOpen from '../assets/mapOne/objects/doorOpen.png'
 import purpleArray from '../assets/mapOne/objects/purpleArray.png'
 import purpleDiamond from '../assets/mapOne/objects/purpleDiamond.png'
@@ -24,6 +24,13 @@ import zombie from '../assets/mapOne/objects/girl1.png'
 
 import knife1_1 from '../assets/weapons/knife1_1.png'
 import staff1_1 from '../assets/weapons/staff1_1.png'
+
+import grassPlatformLeft from "../assets/mapOne/tiles/left.png";
+import grassPlatformMiddle from "../assets/mapOne/tiles/mid.png";
+import grassPlatformRight from "../assets/mapOne/tiles/right.png";
+import sky from "../assets/mapOne/background/Background_gray1.png";
+import houseOne from "../assets/mapOne/objects/house/1_gray.png";
+import cloudSmall from '../assets/mapOne/background/coluds_small.png'
 
 //路面组
 var roadGroup;
@@ -133,6 +140,13 @@ export default class playScene extends Phaser.Scene
 
     preload ()
     {
+        //加载地板
+        this.load.image('sky',sky);
+        this.load.image('houseOne',houseOne);
+        this.load.image('grassPlatformLeft',grassPlatformLeft);
+        this.load.image('grassPlatformMiddle',grassPlatformMiddle);
+        this.load.image('grassPlatformRight',grassPlatformRight);
+        this.load.image('cloudSmall',cloudSmall);
         //加载石头
         this.load.image('stone1',stone1);
         this.load.image('stone2',stone2);
@@ -345,8 +359,8 @@ export default class playScene extends Phaser.Scene
      */
     createZombie() {
         var originX = 2000;
-        var zombieNums = 30;
-        var zombiesInterval = ((RoadLastXBase * RoadBaseSpacing) / zombieNums) / 3;
+        var zombieNums = 60;
+        var zombiesInterval = ((RoadLastXBase * Phaser.Math.Between(400,600)) / zombieNums) / 3;
         for (let i = 0; i < zombieNums; i++) {
             var x = Phaser.Math.Between(originX, originX + zombiesInterval);
             var zombie = zombies.create(x,500,'zombie').setScale(3).setSize(20,45).setDrag(2300,200);
@@ -357,6 +371,7 @@ export default class playScene extends Phaser.Scene
             // console.log(zombie)
             originX = originX + zombiesInterval;
         }
+        console.log('最后生成位置：' + originX)
     }
 
     /**
@@ -389,7 +404,7 @@ export default class playScene extends Phaser.Scene
             if (zombie.y > 1150) {
                 var purpleArray = purpleArrayGroup.getChildren()[Phaser.Math.Between(0,purpleArrayGroup.getLength() - 1)]
                 purpleArray.x = zombie.x;
-                purpleArray.y = 500;
+                purpleArray.y = 400;
                 zombie.y = 500;
                 purpleArray.anims.play('purpleArrayAnim',true)
                 // 监听动画播放完成事件
@@ -451,61 +466,72 @@ export default class playScene extends Phaser.Scene
         //基础X坐标
         RoadLastXBase = 0;
         //最后生成Y高度
-        RoadLastYBase = 1150;
+        RoadLastYBase = 1050;
         //地台高度差
         var platformHeightDifference = 100;
         //创建路面
-        roadGroup.create(RoadLastXBase,1150,'grassPlatformLeft').setSize(210,64).setOrigin(0,1).setScale(3.1).setOffset(40,-150)
+        roadGroup.create(RoadLastXBase,1050,'grassPlatformLeft').setSize(210,64).setOrigin(0,1).setScale(3.1).setOffset(40,-80)
         RoadLastXBase ++;
         for (RoadLastXBase; RoadLastXBase < 10; RoadLastXBase++) {
-            roadGroup.create(RoadLastXBase * RoadBaseSpacing,1150,'grassPlatformMiddle').setSize(210,64).setOrigin(0,1).setScale(3.1).setOffset(40,-150)
+            roadGroup.create(RoadLastXBase * RoadBaseSpacing,1050,'grassPlatformMiddle').setSize(210,64).setOrigin(0,1).setScale(3.1).setOffset(40,-80)
         }
-        roadGroup.create((RoadLastXBase) * RoadBaseSpacing,1150,'grassPlatformRight').setSize(210,64).setOrigin(0,1).setScale(3.1).setOffset(40,-150)
+        roadGroup.create((RoadLastXBase) * RoadBaseSpacing,1050,'grassPlatformRight').setSize(210,64).setOrigin(0,1).setScale(3.1).setOffset(40,-80)
         RoadLastXBase = RoadLastXBase + 1;
         for (let i = 1; i < 50; i++) {
             //随机Y轴值
             var y = 0;
             while ((RoadLastYBase - y) > platformHeightDifference) {
-                y = Phaser.Math.Between(500,1150);
+                y = Phaser.Math.Between(500,1050);
             }
             RoadLastYBase = y;
             //多长的路
             var howLong = Phaser.Math.Between(1,10);
-            roadGroup.create(RoadLastXBase * RoadBaseSpacing,y,'grassPlatformLeft').setSize(210,64).setOrigin(0,1).setScale(3.1).setOffset(40,-150)
+            roadGroup.create(RoadLastXBase * RoadBaseSpacing,y,'grassPlatformLeft').setSize(210,64).setOrigin(0,1).setScale(3.1).setOffset(40,-80)
             for (let j = RoadLastXBase + 1; j < howLong + RoadLastXBase; j++) {
-                roadGroup.create(j * RoadBaseSpacing,y,'grassPlatformMiddle').setSize(210,64).setOrigin(0,1).setScale(3.1).setOffset(40,-150)
+                roadGroup.create(j * RoadBaseSpacing,y,'grassPlatformMiddle').setSize(210,64).setOrigin(0,1).setScale(3.1).setOffset(40,-80)
             }
-            roadGroup.create((howLong + RoadLastXBase)* RoadBaseSpacing,y,'grassPlatformRight').setSize(210,64).setOrigin(0,1).setScale(3.1).setOffset(40,-150)
+            roadGroup.create((howLong + RoadLastXBase)* RoadBaseSpacing,y,'grassPlatformRight').setSize(210,64).setOrigin(0,1).setScale(3.1).setOffset(40,-80)
             RoadLastXBase = RoadLastXBase + howLong + 1;
+            //创建云朵
+            if (Phaser.Math.Between(0,1) === 0) {
+                var cloudName = 'cloudSmall';
+                var cloudY = Phaser.Math.Between(50,500);
+                var cloudScale = 2;
+                //创建树
+                sceneryObj.create(RoadLastXBase * (RoadBaseSpacing + 100 )
+                    ,cloudY
+                    ,cloudName)
+                    .setScale(cloudScale)
+            }
             //创建树
             if (howLong >= 2 && Phaser.Math.Between(0,1) === 0) {
                 var treesName ;
-                var treesY = RoadLastYBase - 240;
+                var treesY = RoadLastYBase - 180;
                 var treesScale = 6;
                 switch (Phaser.Math.Between(1,6)) {
                     case 1:
                         treesName = 'tree1';
-                        treesY = RoadLastYBase - 530;
+                        treesY = RoadLastYBase - 460;
                         treesScale = 3;break;
                     case 2:
                         treesName = 'tree2';
-                        treesY = RoadLastYBase - 490;
+                        treesY = RoadLastYBase - 420;
                         treesScale = 5;break;
                     case 3:
                         treesName = 'tree3';
-                        treesY = RoadLastYBase - 550;
+                        treesY = RoadLastYBase - 480;
                         treesScale = 6;break;
                     case 4:
                         treesName = 'tree4';
-                        treesY = RoadLastYBase - 540;
+                        treesY = RoadLastYBase - 470;
                         treesScale = 3;break;
                     case 5:
                         treesName = 'tree5'
-                        treesY = RoadLastYBase - 460
+                        treesY = RoadLastYBase - 390
                         treesScale = 4;break;
                     case 6:
                         treesName = 'tree6';
-                        treesY = RoadLastYBase - 460;
+                        treesY = RoadLastYBase - 390;
                         treesScale = 4
                         break;
                 }
@@ -531,30 +557,30 @@ export default class playScene extends Phaser.Scene
             //创建灌木丛
             if (howLong >= 2 && Phaser.Math.Between(0,1) === 0) {
                 var bushesName ;
-                var bushesY = RoadLastYBase - 240;
+                var bushesY = RoadLastYBase - 180;
                 var bushesScale = 6;
                 switch (Phaser.Math.Between(1,6)) {
                     case 1:
                         bushesName = 'bushes1';
-                        bushesY = RoadLastYBase - 270;break;
+                        bushesY = RoadLastYBase - 200;break;
                     case 2:
                         bushesName = 'bushes2';
-                        bushesY = RoadLastYBase - 230;
+                        bushesY = RoadLastYBase - 160;
                         bushesScale = 4;break;
                     case 3:
                         bushesName = 'bushes3';
-                        bushesY = RoadLastYBase - 205;
+                        bushesY = RoadLastYBase - 135;
                         bushesScale = 6;break;
                     case 4:
                         bushesName = 'bushes4';
-                        bushesY = RoadLastYBase - 275;
+                        bushesY = RoadLastYBase - 205;
                         bushesScale = 5;break;
                     case 5:
                         bushesName = 'bushes5'
-                        bushesY = RoadLastYBase - 310;break;
+                        bushesY = RoadLastYBase - 240;break;
                     case 6:
                         bushesName = 'bushes6';
-                        bushesY = RoadLastYBase - 250;
+                        bushesY = RoadLastYBase - 190;
                         break;
                 }
                 //差值
@@ -577,37 +603,37 @@ export default class playScene extends Phaser.Scene
             //生成房子背景
             if (howLong >= 6 && Phaser.Math.Between(0,1) === 0) {
                 sceneryObj.create(RoadLastXBase * RoadBaseSpacing - Phaser.Math.Between(2 * RoadBaseSpacing,5 * RoadBaseSpacing)
-                    ,y - 500
+                    ,y - 440
                     ,'houseOne')
                     .setScale(6)
             }
             //创建石头
             if (howLong >= 4 && Phaser.Math.Between(0,1) === 0) {
                 var stoneName ;
-                var stoneY = RoadLastYBase - 240;
+                var stoneY = RoadLastYBase - 180;
                 var stoneScale = 6;
                 switch (Phaser.Math.Between(1,6)) {
                     case 1:
                         stoneName = 'stone1';
-                        stoneY = RoadLastYBase - 258;break;
+                        stoneY = RoadLastYBase - 190;break;
                     case 2:
                         stoneName = 'stone2';
-                        stoneY = RoadLastYBase - 295;
+                        stoneY = RoadLastYBase - 225;
                         stoneScale = 4;break;
                     case 3:
                         stoneName = 'stone3';
-                        stoneY = RoadLastYBase - 240;
+                        stoneY = RoadLastYBase - 170;
                         stoneScale = 5;break;
                     case 4:
                         stoneName = 'stone4';
-                        stoneY = RoadLastYBase - 280;
+                        stoneY = RoadLastYBase - 210;
                         stoneScale = 5;break;
                     case 5:
                         stoneName = 'stone5'
-                        stoneY = RoadLastYBase - 260;break;
+                        stoneY = RoadLastYBase - 190;break;
                     case 6:
                         stoneName = 'stone6'
-                        stoneY = RoadLastYBase - 260;break;
+                        stoneY = RoadLastYBase - 190;break;
                 }
                 //差值
                 var stoneDifference;
