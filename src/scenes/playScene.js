@@ -639,7 +639,7 @@ export default class playScene extends Phaser.Scene
         this.anims.create({
             key: 'playerA',
             frames: this.anims.generateFrameNumbers('player',{start: 9, end: 12}),
-            frameRate: 6,
+            frameRate: 12,
             repeat: -1
         })
         this.anims.create({
