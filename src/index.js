@@ -1,9 +1,11 @@
 import Phaser from 'phaser';
 import logo from './assets/YansGames.png'
-import player from './assets/player.png'
+import player from './assets/players/soul.png'
+import player01 from './assets/players/langKnifeGirl_01.png'
 import bullets from './assets/laserSprites/26.png'
 import redHealth from './assets/states/health/redHealth.jpg'
 import greenHealth from './assets/states/health/greenHealth.jpg'
+import attackObj from './assets/attackObj.png'
 import playScene from './scenes/playScene'
 
 var playerHealthMax;
@@ -18,9 +20,11 @@ class MyGame extends Phaser.Scene
     {
         //加载图
         this.load.image('bullets',bullets);
+        this.load.image('attackObj',attackObj);
         //加载精灵
         this.load.spritesheet('logo',logo,{frameWidth: 896 , frameHeight: 896})
-        this.load.spritesheet('player',player,{frameWidth: 300 , frameHeight: 200})
+        this.load.spritesheet('player',player,{frameWidth: 225 , frameHeight: 300})
+        this.load.spritesheet('player01',player01,{frameWidth: 250 , frameHeight: 200})
         //加载血量图
         this.load.image('redHealth',redHealth);
         this.load.image('greenHealth',greenHealth);

@@ -44,6 +44,8 @@ var player;
 var playerBaseSpeed ;
 //攻击键①
 var attackOne;
+//攻击键J动画检测
+var hasAttackOnePlayed;
 //攻击键②
 var attackTwo;
 //交互键
@@ -83,6 +85,8 @@ var greenHealth;
 var playerHealthMax;
 //玩家最大血量文本实体
 var playerHealthMaxTextObj;
+//玩家朝向单位向量
+var playerUnitVector;
 //玩家当前血量
 var playerHealthNow;
 //玩家当前血量文本对象
@@ -126,6 +130,8 @@ export default class playScene extends Phaser.Scene
         playerBaseSpeed = 500;
         //受伤标志
         hurtFlag = false;
+        //攻击键1播放标志
+        hasAttackOnePlayed = false;
     }
 
     init(data) {
@@ -201,8 +207,8 @@ export default class playScene extends Phaser.Scene
         background2.setTilePosition(0,0)
         //创建临时提示
         this.add.text(300,100,'目前是开发阶段的Demo    操作说明：W A S D 控制方向，J键攻击',{fontSize: '48px'})
-        this.add.text(300,200,'6月12日更新: 完善怪物寻路,增加怪物模型,以及部分动画,增加玩家血量和受伤机制',{fontSize: '48px'})
-        this.add.text(300,300,'下阶段计划：',{fontSize: '48px'})
+        this.add.text(300,200,'6月15日更新: 增加怪物血量,伤害机制,通用化替换魂',{fontSize: '48px'})
+        this.add.text(300,300,'下阶段计划：更多的魂',{fontSize: '48px'})
         // 设置相机的滚动因子
         mainCameras = this.cameras.main.setScroll(-0.3, 0);
         //相机缩放
@@ -226,9 +232,8 @@ export default class playScene extends Phaser.Scene
             .setSize(100,130)
             .setDepth(1);
         //初始化玩家数据
-        player.setData('haveWeapon',0)
-        player.setData('weapon1',0)
-        player.setData('weapon2',0)
+        player.setData('soul',0)
+        player.setData('textureName','player')
         player.setBounce(0.1)
         //创建玩家动作动画
         this.createPlayerAnim();
@@ -277,49 +282,94 @@ export default class playScene extends Phaser.Scene
     update(time, delta) {
         //玩家移动及动画
         if (!hurtFlag) {
-            if (cursors.addKey('A').isDown)
+            if (cursors.addKey('J').isDown)
+            {
+                //攻击1
+                if (player.getData('soul') === 0) {
+                    textTips.setText('你只是一个魂')
+                } else if (hasAttackOnePlayed === false){
+                    if (playerLastDirection === 1) {
+                        player.anims.play('playerJRight',true)
+                    } else {
+                        player.anims.play('playerJLeft',true)
+                    }
+                    //攻击范围
+                    var damageRange = player.getData('range');
+                    //近战攻击
+                    if (player.getData('damageType') === 0) {
+                        var attackObj = player.getData('attackObj');
+                        attackObj.setPosition(player.x + (playerLastDirection * damageRange),player.y)
+                    }
+                    hasAttackOnePlayed = true;
+                    player.setVelocityX(0);
+                }
+            }
+            else if (cursors.addKey('A').isDown)
             {
                 player.setVelocityX(-playerBaseSpeed);
-                player.anims.play('playerA',true)
+                if (player.getData('soul') === 0) {
+                    player.anims.play('soulA',true)
+                } else {
+                    player.anims.play('playerA',true)
+                }
                 playerLastDirection = -1
             }
             else if (cursors.addKey('D').isDown)
             {
                 player.setVelocityX(playerBaseSpeed);
-                player.anims.play('playerD',true)
+                if (player.getData('soul') === 0) {
+                    player.anims.play('soulD',true)
+                } else {
+                    player.anims.play('playerD',true)
+                }
                 playerLastDirection = 1
 
             }
             else
             {
                 player.setVelocityX(0);
-                player.anims.play('playerStand',true)
+                if (player.getData('soul') === 0) {
+                    player.anims.play('soulStand',true)
+                } else {
+                    player.anims.play('playerStand',true)
+                }
+            }
+            // 在动画的 complete 事件回调函数中设置 isPlayingAnimation 为 false
+            if (cursors.addKey('J').isUp)
+            {
+                hasAttackOnePlayed = false;
+                //近战攻击
+                if (player.getData('damageType') === 0) {
+                    var attackObj = player.getData('attackObj');
+                    attackObj.setPosition(-1000,-1000)
+                }
             }
 
             if (cursors.addKey('W').isDown && player.body.touching.down)
             {
                 player.setVelocityY(-playerBaseSpeed - 50);
-                player.anims.play('playerStand',false)
+                if (player.getData('soul') === 0) {
+                    player.anims.play('soulStand',true)
+                } else {
+                    player.anims.play('playerStand',true)
+                }
             }
 
             if (cursors.addKey('S').isDown && !player.body.touching.down)
             {
                 player.setVelocityY(+playerBaseSpeed + 200);
-                player.anims.play('playerStand',false)
+                if (player.getData('soul') === 0) {
+                    player.anims.play('soulStand',true)
+                } else {
+                    player.anims.play('playerStand',true)
+                }
             }
         }
         //怪物巡逻
         this.monsterPatrol(delta)
-        //武器检测
-        if (player.getData('weapon1') === 0 && player.getData('weapon2') === 0 ) {
-            player.setData('haveWeapon',0);
-        } else {
-            player.setData('haveWeapon',1);
-        }
-        //攻击1
-        if (attackOne.isDown) {
-            if (player.getData('haveWeapon') === 0) {
-                textTips.setText('你当前没有武器')
+        /*if (attackOne.isDown) {
+            if (player.getData('soul') === 0) {
+                textTips.setText('你只是一个魂,不能攻击')
             } else {
                 player.anims.play('playerJ',true)
                 //子弹速度
@@ -336,18 +386,13 @@ export default class playScene extends Phaser.Scene
                 bullet.setBounce(0.5)
             }
             attackOne.reset()
-        }
+        }*/
         // 根据相机的滚动位置调整背景图像的位置
         // 背景图像的滚动速度与相机滚动因子相关
         background1.tilePositionX = this.cameras.main.scrollX * 0.3;
         background2.tilePositionX = this.cameras.main.scrollX * 0.3;
         //根据玩家坐标生成背景图
         this.adjustmentBackground()
-        //实时更新武器组位置
-        weaponGroup.getChildren().forEach(weapon => {
-            weapon.x = player.x + weapon.getData('XWithPlayer');
-            weapon.y = player.y + weapon.getData('YWithPlayer');
-        })
         //玩家信息随相机更新移动
         playerInfoContainer.setPosition(this.cameras.main.scrollX,this.cameras.main.scrollY)
         //检测死亡
@@ -364,10 +409,22 @@ export default class playScene extends Phaser.Scene
         for (let i = 0; i < zombieNums; i++) {
             var x = Phaser.Math.Between(originX, originX + zombiesInterval);
             var zombie = zombies.create(x,500,'zombie').setScale(3).setSize(20,45).setDrag(2300,200);
-            zombie.setData('health',100)
+            zombie.setData('healthMax',100)
+            zombie.setData('healthNow',100)
             zombie.setData('damage',10)
             zombie.setData('patrolPath',[originX,originX + zombiesInterval])
             zombie.setData('currentPathIndex', 0)
+            //红绿血条
+            var monsterRedHealthObj = this.add.image(zombie.x - 50,zombie.y - 120,'redHealth').setOrigin(0.5,0.5);
+            monsterRedHealthObj.displayWidth = redHealth.displayWidth * 0.5
+            monsterRedHealthObj.displayHeight = redHealth.displayHeight * 0.8
+            monsterRedHealthObj.setOrigin(0,0);
+            var monsterGreenHealthObj = this.add.image(zombie.x - 50,zombie.y - 120,'greenHealth').setOrigin(0.5,0.5);
+            monsterGreenHealthObj.displayWidth = greenHealth.displayWidth * 0.5
+            monsterGreenHealthObj.displayHeight = greenHealth.displayHeight * 0.8
+            monsterGreenHealthObj.setOrigin(0,0)
+            zombie.setData('monsterRedHealth',monsterRedHealthObj)
+            zombie.setData('monsterGreenHealth',monsterGreenHealthObj)
             // console.log(zombie)
             originX = originX + zombiesInterval;
         }
@@ -381,7 +438,6 @@ export default class playScene extends Phaser.Scene
         zombies.getChildren().forEach(function (zombie) {
             var currentPathIndex = zombie.getData('currentPathIndex');
             var patrolPath = zombie.getData('patrolPath');
-            // console.log(patrolPath)
             if (Math.abs(zombie.x - patrolPath[currentPathIndex]) < 1) {
                 if (currentPathIndex === 0) {
                     zombie.setData('currentPathIndex', 1)
@@ -401,6 +457,14 @@ export default class playScene extends Phaser.Scene
             } else {
                 zombie.anims.play('zombieRunLeft',true);
             }
+            //更新血条和怪物位置
+            var monsterGreenHealth = zombie.getData('monsterGreenHealth');
+            var monsterRedHealth = zombie.getData('monsterRedHealth');
+            if (monsterGreenHealth !== undefined && monsterRedHealth !== undefined) {
+                monsterGreenHealth.setPosition(zombie.x- 50,zombie.y - 120)
+                monsterRedHealth.setPosition(zombie.x- 50,zombie.y - 120)
+            }
+
             if (zombie.y > 1150) {
                 var purpleArray = purpleArrayGroup.getChildren()[Phaser.Math.Between(0,purpleArrayGroup.getLength() - 1)]
                 purpleArray.x = zombie.x;
@@ -656,33 +720,61 @@ export default class playScene extends Phaser.Scene
      * 创建角色动画
      */
     createPlayerAnim() {
+        var textureName = player.getData('textureName');
+        if (player.getData('soul') !== 0 ){
+            this.anims.create({
+                key: 'playerD',
+                frames: this.anims.generateFrameNumbers(textureName,{start: 4, end: 7}),
+                frameRate: 12,
+                repeat: 1
+            })
+            this.anims.create({
+                key: 'playerA',
+                frames: this.anims.generateFrameNumbers(textureName,{start: 8, end: 11}),
+                frameRate: 12,
+                repeat: 1
+            })
+            this.anims.create({
+                key: 'playerJRight',
+                frames: this.anims.generateFrameNumbers(textureName,{start: 12, end: 17}),
+                frameRate: 12,
+                repeat: 1
+            })
+            this.anims.create({
+                key: 'playerJLeft',
+                frames: this.anims.generateFrameNumbers(textureName,{start: 18, end: 21}),
+                frameRate: 12,
+                repeat: 1
+            })
+            this.anims.create({
+                key: 'playerStand',
+                frames: this.anims.generateFrameNumbers(textureName,{start: 0, end: 3}),
+                frameRate: 8,
+                repeat: -1
+            })
+            this.anims.create({
+                key: 'playerUnderAttack',
+                frames: this.anims.generateFrameNumbers(textureName,{start: 4, end: 4}),
+                frameRate: 12,
+                repeat: -1
+            })
+        }
+        //灵魂动画
         this.anims.create({
-            key: 'playerD',
-            frames: this.anims.generateFrameNumbers('player',{start: 5, end: 8}),
+            key: 'soulD',
+            frames: this.anims.generateFrameNumbers(textureName,{start: 8, end: 11}),
             frameRate: 12,
             repeat: -1
         })
         this.anims.create({
-            key: 'playerA',
-            frames: this.anims.generateFrameNumbers('player',{start: 9, end: 12}),
+            key: 'soulA',
+            frames: this.anims.generateFrameNumbers(textureName,{start: 4, end: 7}),
             frameRate: 12,
             repeat: -1
         })
         this.anims.create({
-            key: 'playerJ',
-            frames: this.anims.generateFrameNumbers('player',{start: 13, end: 16}),
-            frameRate: 3,
-            repeat: -1
-        })
-        this.anims.create({
-            key: 'playerStand',
-            frames: this.anims.generateFrameNumbers('player',{start: 0, end: 3}),
-            frameRate: 8,
-            repeat: -1
-        })
-        this.anims.create({
-            key: 'playerUnderAttack',
-            frames: this.anims.generateFrameNumbers('player',{start: 4, end: 4}),
+            key: 'soulStand',
+            frames: this.anims.generateFrameNumbers(textureName,{start: 0, end: 3}),
             frameRate: 12,
             repeat: -1
         })
@@ -757,13 +849,13 @@ export default class playScene extends Phaser.Scene
             loop:true
         })
         //创建开局获取武器的紫色水晶
-        purpleDiamondObj = this.physics.add.staticSprite(800,860, 'purpleDiamond')
+        purpleDiamondObj = this.physics.add.staticSprite(800,830, 'purpleDiamond')
             .setScale(5)
             .setSize(120,240)
             .setOffset(-40,-100);
         purpleDiamondObj.anims.play('purpleDiamondAnim',true)
         //创建文字提示
-        var purpleDiamondObjText = this.add.text(660,700,'靠近使用E键获取武器' ,{fontSize: '32px'});
+        var purpleDiamondObjText = this.add.text(660,660,'使用E来获取你的魂' ,{fontSize: '32px'});
         purpleDiamondObjText.setColor('#9b4aff')
     }
 
@@ -798,6 +890,35 @@ export default class playScene extends Phaser.Scene
     }
 
     /**
+     * 怪物血量扣减
+     * @constructor
+     */
+    monsterHealthReduction(attackObj,monster) {
+
+        var healthNow = monster.getData('healthNow');
+        var healthMax = monster.getData('healthMax');
+        var monsterGreenHealth = monster.getData('monsterGreenHealth');
+        var monsterRedHealth = monster.getData('monsterRedHealth');
+        var damage = player.getData('damage');
+        //扣减血量
+        healthNow = healthNow - damage;
+        console.log('怪物血量：' + healthNow)
+        //怪物死亡
+        if (healthNow <= 0) {
+            monster.disableBody(true,true)
+            zombies.remove(monster);
+            monsterGreenHealth.destroy()
+            monsterRedHealth.destroy()
+        }
+        monster.setData('healthNow',healthNow)
+        //计算比例
+        monsterGreenHealth.displayWidth = monsterGreenHealth.displayWidth * (healthNow / healthMax);
+        monster.setData('monsterGreenHealth',monsterGreenHealth)
+        //击退动画
+        monster.setPosition(monster.x + (playerLastDirection * 200),monster.y)
+    }
+
+    /**
      * 公共碰撞检测创建
      */
     createCollider() {
@@ -825,18 +946,30 @@ export default class playScene extends Phaser.Scene
     getWeaponFromStart() {
         //交互
         if (interactiveKey.isDown) {
-            if (player.getData('weapon1') === 1) {
-                textTips.setText('不可以重复获得')
-                interactiveKey.reset()
-            } else {
-                player.setData('weapon1',1)
-                textTips.setText('获得武器')
-                weaponGroup.create(0,0,'staff1_1')
-                    .setScale(0.5)
-                    .setRotation(-45)
-                    .setData('XWithPlayer',36)
-                    .setData('YWithPlayer',15);
-                interactiveKey.reset()
+            if (player.getData('soul') === 0 ) {
+                //替换纹理
+                player.setTexture('player01')
+                player.setPosition(player.x,player.y - 50)
+                player.setOffset(50)
+                //设置纹理名
+                player.setData('textureName','player01')
+                player.setData('soul',1)
+                //伤害
+                player.setData('damage', 20)
+                //攻击范围
+                player.setData('range', 120)
+                //攻击类型(0 近战  1远程)
+                player.setData('damageType',0)
+                //创建攻击模型
+                var attackObj = this.physics.add.sprite(-1000,-1000,'attackObj').setScale(2,1).setAlpha(0);
+                attackObj.body.allowGravity = false;
+                player.setData('attackObj',attackObj)
+                //创建碰撞
+                //接触检测（玩家，丧尸）
+                this.physics.add.overlap(attackObj,zombies,this.monsterHealthReduction,null,this)
+                //临时提示
+                textTips.setText('后期加入更多不同的魂')
+                this.createPlayerAnim()
             }
         }
     }
