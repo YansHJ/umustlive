@@ -1,49 +1,31 @@
-# Phaser 3 Webpack Project Template
 
-A Phaser 3 project template with ES6 support via [Babel 7](https://babeljs.io/) and [Webpack 4](https://webpack.js.org/) that includes hot-reloading for development and production-ready builds.
+# u must live
 
-This has been updated for Phaser 3.50.0 version and above.
+一个使用phaser3进行开发的html肉鸽游戏（没来得及加入肉鸽元素就结束了）
 
-Loading images via JavaScript module `import` is also supported, although not recommended.
+主要还是作为学习的一个练习项目
 
-## Requirements
 
-[Node.js](https://nodejs.org) is required to install dependencies and run scripts via `npm`.
 
-## Available Commands
 
-| Command | Description |
-|---------|-------------|
-| `npm install` | Install project dependencies |
-| `npm start` | Build project and open web server running project |
-| `npm run build` | Builds code bundle with production settings (minification, uglification, etc..) |
+## 特点
 
-## Writing Code
+在这个练手项目中，独立思考实现了
 
-After cloning the repo, run `npm install` from your project directory. Then, you can start the local development server by running `npm start`.
+- 背景图随相机滚动，并在玩家即将达到背景边界的坐标时，挪动地图以达到地图无限延展的效果,左右方向均可实现
+- 半随机生成地图平台，景物等
+- 怪物坐标点巡逻
+- 因不会tile而手动搭建的场景（废物）
+- 等等
 
-After starting the development server with `npm start`, you can edit any files in the `src` folder and webpack will automatically recompile and reload your server (available at `http://localhost:8080` by default).
 
-## Customizing the Template
+## 经验和教育
 
-### Babel
+或许是游戏开发经验不足，亦或者对phaser3使用的不是很熟练，
+有许多想法实现起来很困难，并且代码逻辑越写越乱
+之后或许会转为使用Unity来进行开发
 
-You can write modern ES6+ JavaScript and Babel will transpile it to a version of JavaScript that you want your project to support. The targeted browsers are set in the `.babelrc` file and the default currently targets all browsers with total usage over "0.25%" but excludes IE11 and Opera Mini.
+## 致谢
 
- ```
-"browsers": [
-  ">0.25%",
-  "not ie 11",
-  "not op_mini all"
-]
- ```
+ - [感谢自己](http://yanns.cn)
 
-### Webpack
-
-If you want to customize your build, such as adding a new webpack loader or plugin (i.e. for loading CSS or fonts), you can modify the `webpack/base.js` file for cross-project changes, or you can modify and/or create new configuration files and target them in specific npm tasks inside of `package.json'.
-
-## Deploying Code
-
-After you run the `npm run build` command, your code will be built into a single bundle located at `dist/bundle.min.js` along with any other assets you project depended. 
-
-If you put the contents of the `dist` folder in a publicly-accessible location (say something like `http://mycoolserver.com`), you should be able to open `http://mycoolserver.com/index.html` and play your game.

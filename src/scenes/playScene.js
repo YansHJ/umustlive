@@ -50,6 +50,8 @@ var hasAttackOnePlayed;
 var attackTwo;
 //交互键
 var interactiveKey;
+//虚拟交互键
+var fictitiousInteractiveKey;
 //子弹组
 var bullets;
 //丧尸组
@@ -106,6 +108,12 @@ var textTips ;
 var purpleDiamondObj;
 //武器组
 var weaponGroup;
+//摇杆
+var joystick;
+//摇杆弧度
+var joyRadian;
+//使用摇杆
+var useJoy;
 export default class playScene extends Phaser.Scene
 {
     /**
@@ -132,6 +140,12 @@ export default class playScene extends Phaser.Scene
         hurtFlag = false;
         //攻击键1播放标志
         hasAttackOnePlayed = false;
+        //摇杆弧度
+        joyRadian = 0;
+        //虚拟交互键
+        fictitiousInteractiveKey = false;
+        //使用摇杆
+        useJoy = false;
     }
 
     init(data) {
@@ -206,7 +220,7 @@ export default class playScene extends Phaser.Scene
         background1.setTilePosition(0,0)
         background2.setTilePosition(0,0)
         //创建临时提示
-        this.add.text(300,100,'目前是开发阶段的Demo    操作说明：W A S D 控制方向，J键攻击',{fontSize: '48px'})
+        this.add.text(300,100,'目前是开发阶段的Demo    操作说明：A S D 控制方向,W或者空格跳跃，J键攻击',{fontSize: '48px'})
         this.add.text(300,200,'6月15日更新: 增加怪物血量,伤害机制,通用化替换魂',{fontSize: '48px'})
         this.add.text(300,300,'下阶段计划：更多的魂',{fontSize: '48px'})
         // 设置相机的滚动因子
@@ -272,6 +286,48 @@ export default class playScene extends Phaser.Scene
         this.createCollider();
         //创建丧尸
         this.createZombie();
+        //摇杆事件
+        this.joyStickEvent();
+        //其他按键
+        var aimBtn = this.add.image(1600,800,'voidBtn');
+        var aimBtnText = this.add.text(1600,800,'攻击',{fontSize: '64px'}).setColor('#0a0a0a').setOrigin(0.5,0.5);
+        var upBtn = this.add.image(1800,800,'voidBtn');
+        var upBtnText = this.add.text(1800,800,'跳跃',{fontSize: '64px'}).setColor('#0a0a0a').setOrigin(0.5,0.5);
+        var EBtn = this.add.image(1700,600,'voidBtn');
+        var EBtnText = this.add.text(1700,600,'E',{fontSize: '96px'}).setColor('#0a0a0a').setOrigin(0.5,0.5).setOrigin(0.5,0.5);
+        aimBtnText.setInteractive()
+        upBtnText.setInteractive()
+        EBtnText.setInteractive()
+        playerInfoContainer.add(upBtn)
+        playerInfoContainer.add(aimBtn)
+        playerInfoContainer.add(EBtn)
+        playerInfoContainer.add(aimBtnText)
+        playerInfoContainer.add(upBtnText)
+        playerInfoContainer.add(EBtnText)
+        //按键事件监听
+        aimBtnText.on('pointerdown',() => {
+            this.JBtnEvent();
+            this.time.delayedCall(500,() => {
+                hasAttackOnePlayed = false;
+                //近战攻击
+                if (player.getData('damageType') === 0) {
+                    var attackObj = player.getData('attackObj');
+                    attackObj.setPosition(-1000,-1000)
+                }
+            })
+        });
+        upBtnText.on('pointerdown',() => {
+            if (player.body.touching.down ) {
+                this.upBtnEvent();
+            }
+        });
+        EBtnText.on('pointerdown',() => {
+            fictitiousInteractiveKey = true;
+            this.getWeaponFromStart();
+            this.time.delayedCall(500,() => {
+                fictitiousInteractiveKey = false;
+            })
+        });
     }
 
     /**
@@ -284,58 +340,26 @@ export default class playScene extends Phaser.Scene
         if (!hurtFlag) {
             if (cursors.addKey('J').isDown)
             {
-                //攻击1
-                if (player.getData('soul') === 0) {
-                    textTips.setText('你只是一个魂')
-                } else if (hasAttackOnePlayed === false){
-                    if (playerLastDirection === 1) {
-                        player.anims.play('playerJRight',true)
-                    } else {
-                        player.anims.play('playerJLeft',true)
-                    }
-                    //攻击范围
-                    var damageRange = player.getData('range');
-                    //近战攻击
-                    if (player.getData('damageType') === 0) {
-                        var attackObj = player.getData('attackObj');
-                        attackObj.setPosition(player.x + (playerLastDirection * damageRange),player.y)
-                    }
-                    hasAttackOnePlayed = true;
-                    player.setVelocityX(0);
-                }
+                this.JBtnEvent();
             }
             else if (cursors.addKey('A').isDown)
             {
-                player.setVelocityX(-playerBaseSpeed);
-                if (player.getData('soul') === 0) {
-                    player.anims.play('soulA',true)
-                } else {
-                    player.anims.play('playerA',true)
-                }
-                playerLastDirection = -1
+                this.leftBtnEvent();
             }
             else if (cursors.addKey('D').isDown)
             {
-                player.setVelocityX(playerBaseSpeed);
-                if (player.getData('soul') === 0) {
-                    player.anims.play('soulD',true)
-                } else {
-                    player.anims.play('playerD',true)
-                }
-                playerLastDirection = 1
-
+                this.rightBtnEvent();
             }
-            else
-            {
+            else if(!hasAttackOnePlayed && joyRadian === 0) {
                 player.setVelocityX(0);
                 if (player.getData('soul') === 0) {
                     player.anims.play('soulStand',true)
                 } else {
-                    player.anims.play('playerStand',true)
+                    player.anims.play('playerStand',false)
                 }
             }
             // 在动画的 complete 事件回调函数中设置 isPlayingAnimation 为 false
-            if (cursors.addKey('J').isUp)
+            if (cursors.addKey('J').isUp && !useJoy)
             {
                 hasAttackOnePlayed = false;
                 //近战攻击
@@ -345,24 +369,14 @@ export default class playScene extends Phaser.Scene
                 }
             }
 
-            if (cursors.addKey('W').isDown && player.body.touching.down)
+            if ((cursors.addKey('W').isDown || cursors.addKey('SPACE').isDown) && player.body.touching.down )
             {
-                player.setVelocityY(-playerBaseSpeed - 50);
-                if (player.getData('soul') === 0) {
-                    player.anims.play('soulStand',true)
-                } else {
-                    player.anims.play('playerStand',true)
-                }
+                this.upBtnEvent();
             }
 
             if (cursors.addKey('S').isDown && !player.body.touching.down)
             {
-                player.setVelocityY(+playerBaseSpeed + 200);
-                if (player.getData('soul') === 0) {
-                    player.anims.play('soulStand',true)
-                } else {
-                    player.anims.play('playerStand',true)
-                }
+               this.downBtnEvent();
             }
         }
         //怪物巡逻
@@ -428,7 +442,6 @@ export default class playScene extends Phaser.Scene
             // console.log(zombie)
             originX = originX + zombiesInterval;
         }
-        console.log('最后生成位置：' + originX)
     }
 
     /**
@@ -534,12 +547,12 @@ export default class playScene extends Phaser.Scene
         //地台高度差
         var platformHeightDifference = 100;
         //创建路面
-        roadGroup.create(RoadLastXBase,1050,'grassPlatformLeft').setSize(210,64).setOrigin(0,1).setScale(3.1).setOffset(40,-80)
+        roadGroup.create(RoadLastXBase,1050,'grassPlatformLeft').setSize(210,64).setOrigin(0,1).setScale(3.1).setOffset(40,-75)
         RoadLastXBase ++;
         for (RoadLastXBase; RoadLastXBase < 10; RoadLastXBase++) {
-            roadGroup.create(RoadLastXBase * RoadBaseSpacing,1050,'grassPlatformMiddle').setSize(210,64).setOrigin(0,1).setScale(3.1).setOffset(40,-80)
+            roadGroup.create(RoadLastXBase * RoadBaseSpacing,1050,'grassPlatformMiddle').setSize(210,64).setOrigin(0,1).setScale(3.1).setOffset(40,-75)
         }
-        roadGroup.create((RoadLastXBase) * RoadBaseSpacing,1050,'grassPlatformRight').setSize(210,64).setOrigin(0,1).setScale(3.1).setOffset(40,-80)
+        roadGroup.create((RoadLastXBase) * RoadBaseSpacing,1050,'grassPlatformRight').setSize(210,64).setOrigin(0,1).setScale(3.1).setOffset(40,-75)
         RoadLastXBase = RoadLastXBase + 1;
         for (let i = 1; i < 50; i++) {
             //随机Y轴值
@@ -550,11 +563,11 @@ export default class playScene extends Phaser.Scene
             RoadLastYBase = y;
             //多长的路
             var howLong = Phaser.Math.Between(1,10);
-            roadGroup.create(RoadLastXBase * RoadBaseSpacing,y,'grassPlatformLeft').setSize(210,64).setOrigin(0,1).setScale(3.1).setOffset(40,-80)
+            roadGroup.create(RoadLastXBase * RoadBaseSpacing,y,'grassPlatformLeft').setSize(210,64).setOrigin(0,1).setScale(3.1).setOffset(40,-75)
             for (let j = RoadLastXBase + 1; j < howLong + RoadLastXBase; j++) {
-                roadGroup.create(j * RoadBaseSpacing,y,'grassPlatformMiddle').setSize(210,64).setOrigin(0,1).setScale(3.1).setOffset(40,-80)
+                roadGroup.create(j * RoadBaseSpacing,y,'grassPlatformMiddle').setSize(210,64).setOrigin(0,1).setScale(3.1).setOffset(40,-75)
             }
-            roadGroup.create((howLong + RoadLastXBase)* RoadBaseSpacing,y,'grassPlatformRight').setSize(210,64).setOrigin(0,1).setScale(3.1).setOffset(40,-80)
+            roadGroup.create((howLong + RoadLastXBase)* RoadBaseSpacing,y,'grassPlatformRight').setSize(210,64).setOrigin(0,1).setScale(3.1).setOffset(40,-75)
             RoadLastXBase = RoadLastXBase + howLong + 1;
             //创建云朵
             if (Phaser.Math.Between(0,1) === 0) {
@@ -726,25 +739,25 @@ export default class playScene extends Phaser.Scene
                 key: 'playerD',
                 frames: this.anims.generateFrameNumbers(textureName,{start: 4, end: 7}),
                 frameRate: 12,
-                repeat: 1
+                repeat: -1
             })
             this.anims.create({
                 key: 'playerA',
                 frames: this.anims.generateFrameNumbers(textureName,{start: 8, end: 11}),
                 frameRate: 12,
-                repeat: 1
+                repeat: -1
             })
             this.anims.create({
                 key: 'playerJRight',
                 frames: this.anims.generateFrameNumbers(textureName,{start: 12, end: 17}),
                 frameRate: 12,
-                repeat: 1
+                repeat: 0
             })
             this.anims.create({
                 key: 'playerJLeft',
                 frames: this.anims.generateFrameNumbers(textureName,{start: 18, end: 21}),
                 frameRate: 12,
-                repeat: 1
+                repeat: 0
             })
             this.anims.create({
                 key: 'playerStand',
@@ -756,7 +769,7 @@ export default class playScene extends Phaser.Scene
                 key: 'playerUnderAttack',
                 frames: this.anims.generateFrameNumbers(textureName,{start: 4, end: 4}),
                 frameRate: 12,
-                repeat: -1
+                repeat: 0
             })
         }
         //灵魂动画
@@ -764,13 +777,13 @@ export default class playScene extends Phaser.Scene
             key: 'soulD',
             frames: this.anims.generateFrameNumbers(textureName,{start: 8, end: 11}),
             frameRate: 12,
-            repeat: -1
+            repeat: 0
         })
         this.anims.create({
             key: 'soulA',
             frames: this.anims.generateFrameNumbers(textureName,{start: 4, end: 7}),
             frameRate: 12,
-            repeat: -1
+            repeat: 0
         })
         this.anims.create({
             key: 'soulStand',
@@ -902,7 +915,6 @@ export default class playScene extends Phaser.Scene
         var damage = player.getData('damage');
         //扣减血量
         healthNow = healthNow - damage;
-        console.log('怪物血量：' + healthNow)
         //怪物死亡
         if (healthNow <= 0) {
             monster.disableBody(true,true)
@@ -945,7 +957,7 @@ export default class playScene extends Phaser.Scene
      */
     getWeaponFromStart() {
         //交互
-        if (interactiveKey.isDown) {
+        if (fictitiousInteractiveKey || interactiveKey.isDown) {
             if (player.getData('soul') === 0 ) {
                 //替换纹理
                 player.setTexture('player01')
@@ -992,6 +1004,136 @@ export default class playScene extends Phaser.Scene
         bullets.remove(bullet)
     }
 
+    /**
+     * 按键事件-左
+     */
+    leftBtnEvent() {
+        player.setVelocityX(-playerBaseSpeed);
+        if (player.getData('soul') === 0) {
+            player.anims.play('soulA',true)
+        } else {
+            player.anims.play('playerA',true)
+        }
+        playerLastDirection = -1
+    }
+
+    /**
+     * 按键事件-右
+     */
+    rightBtnEvent() {
+        player.setVelocityX(playerBaseSpeed);
+        if (player.getData('soul') === 0) {
+            player.anims.play('soulD',true)
+        } else {
+            player.anims.play('playerD',true)
+        }
+        playerLastDirection = 1
+    }
+
+    /**
+     * 按键事件-上
+     */
+    upBtnEvent() {
+        player.setVelocityY(-playerBaseSpeed - 50);
+        if (player.getData('soul') === 0) {
+            player.anims.play('soulStand',true)
+        } else {
+            player.anims.play('playerStand',true)
+        }
+    }
+
+    /**
+     * 按键事件-下
+     */
+    downBtnEvent() {
+        player.setVelocityY(+playerBaseSpeed + 200);
+        if (player.getData('soul') === 0) {
+            player.anims.play('soulStand',true)
+        } else {
+            player.anims.play('playerStand',true)
+        }
+    }
+
+    /**
+     * 按键事件-E
+     */
+    EBtnEvent() {
+
+    }
+
+    /**
+     * 按键事件-J
+     */
+    JBtnEvent() {
+        //攻击1
+        if (player.getData('soul') === 0) {
+            textTips.setText('你只是一个魂')
+        } else if (hasAttackOnePlayed === false){
+            hasAttackOnePlayed = true;
+            if (playerLastDirection === 1) {
+                player.anims.play('playerJRight',true)
+            } else {
+                player.anims.play('playerJLeft',true)
+            }
+            //攻击范围
+            var damageRange = player.getData('range');
+            //近战攻击
+            if (player.getData('damageType') === 0) {
+                var attackObj = player.getData('attackObj');
+                attackObj.setPosition(player.x + (playerLastDirection * damageRange),player.y)
+            }
+            player.setVelocityX(0);
+        }
+    }
+
+    /**
+     * 摇杆
+     */
+    joyStickEvent() {
+        //摇杆
+        joystick = this.plugins.get("rexVirtualJoyStick").add(this,{
+            x: 150,
+            y: 800,
+            radius: 100,
+            base: this.add.circle(0, 0, 100, 0x888888),    // 摇杆的底座图形
+            thumb: this.add.circle(0, 0, 50, 0xcccccc),   // 摇杆的拇指图形
+            dir: '4dir',
+            forceMin: 5,  // 摇杆的最小力量值
+            enable: true   // 启用摇杆
+        })
+        // 监听摇杆的事件
+        joystick.on('update', () => {
+            // 设置角色的移动速度和方向 (根据力度大小)
+            var speed = 1; // 设置适当的速度值
+            //角度
+            var angle = joystick.angle;
+            //力度
+            var force = joystick.force;
+            //锁定初速度为200，去除加速度的过程
+            if (force !== 0) {
+                force = 200;
+            }
+            //转化为弧度
+            joyRadian = Phaser.Math.DegToRad(angle);
+            //根据不同的摇杆方向加载不同的人物动画
+            // console.log('弧度：' + joyRadian)
+            if (joyRadian !== 0 && !hurtFlag) {
+                if (joyRadian > -0.75 && joyRadian <= 0.75) {
+                    useJoy = true;
+                    this.rightBtnEvent();
+                }
+                if ((joyRadian >= 2.25 && joyRadian < 3 )||( joyRadian >= -3 && joyRadian < -2.25)) {
+                    useJoy = true;
+                    this.leftBtnEvent();
+                }
+                if (joyRadian > 0.75 && joyRadian < 2.25) {
+                    useJoy = true;
+                    this.downBtnEvent();
+                }
+            }
+        });
+    }
+
     /**d
      * 检测死亡
      */
@@ -1011,5 +1153,7 @@ export default class playScene extends Phaser.Scene
     restartScene() {
         this.scene.restart()
     }
+
+
 
 }
